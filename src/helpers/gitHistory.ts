@@ -1,9 +1,7 @@
 import * as parser from './logParser';
-import { spawn } from 'child_process';
 import * as os from 'os';
 import { LogEntry } from '../contracts';
-import { getGitPath } from './gitPaths';
-import * as logger from '../logger';
+import { fetchForGitCmd } from '../api/fetch';
 
 const LOG_ENTRY_SEPARATOR = '95E9659B-27DC-43C4-A717-D75969757EA5';
 const STATS_SEPARATOR = parser.STATS_SEPARATOR;
@@ -13,20 +11,11 @@ export async function getLogEntries(rootDir: string, pageIndex: number = 0, page
     const args = ['log', LOG_FORMAT, '--date-order', '--decorate=full', `--skip=${pageIndex * pageSize}`, `--max-count=${pageSize}`, '--numstat', '--'];
     // This is how you can view the log across all branches
     // args = ['log', LOG_FORMAT, '--date-order', '--decorate=full', `--skip=${pageIndex * pageSize}`, `--max-count=${pageSize}`, '--all', '--']
-    const gitPath = await getGitPath();
-    return new Promise<LogEntry[]>((resolve, reject) => {
-        const options = { cwd: rootDir };
 
-        logger.logInfo('git ' + args.join(' '));
-        let ls = spawn(gitPath, args, options);
-
-        let error = '';
-        let outputLines = [''];
-        const entries: LogEntry[] = [];
-
-        ls.stdout.setEncoding('utf8');
-        ls.stdout.on('data', (data: string) => {
-            data.split(/\r?\n/g).forEach((line, index, lines) => {
+    let outputLines = [''];
+    const entries: LogEntry[] = [];
+    return fetchForGitCmd(rootDir, args).then(data => {
+        data.split(/\r?\n/g).forEach((line, index, lines) => {
                 if (line === LOG_ENTRY_SEPARATOR) {
                     let entry = parser.parseLogEntry(outputLines);
                     if (entry !== null) {
@@ -54,36 +43,13 @@ export async function getLogEntries(rootDir: string, pageIndex: number = 0, page
                 outputLines[outputLines.length - 1] += line;
                 outputLines.push('');
             });
-        });
-
-        ls.stdout.on('end', () => {
-            // Process last entry as no trailing seperator
-            if (outputLines.length !== 0) {
-                let entry = parser.parseLogEntry(outputLines);
-                if (entry !== null) {
-                    entries.push(entry);
-                }
+        // Process last entry as no trailing seperator
+        if (outputLines.length !== 0) {
+            let entry = parser.parseLogEntry(outputLines);
+            if (entry !== null) {
+                entries.push(entry);
             }
-        });
-
-        ls.stderr.setEncoding('utf8');
-        ls.stderr.on('data', function (data) {
-            error += data;
-        });
-
-        ls.on('error', function(error) {
-            logger.logError(error);
-            reject(error);
-            return;
-        });
-
-        ls.on('close', () => {
-            if (error.length > 0) {
-                logger.logError(error);
-                reject(error);
-                return;
-            }
-            resolve(entries);
-        });
+        }
+        return entries;
     });
 }

@@ -1,3 +1,5 @@
+import 'clipboard';
+
 (function () {
     (window as any).GITHISTORY = {};
     let clipboard: Clipboard;

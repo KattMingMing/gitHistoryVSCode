@@ -1,3 +1,5 @@
+import * as $ from 'jquery';
+
 (function () {
     interface ActionedDetails {
         name: string;

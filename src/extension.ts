@@ -8,6 +8,7 @@ import * as logViewer from './logViewer/logViewer';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext): Promise<any> {
+    console.log(`I am actually here?`);
     fileHistory.activate(context);
     lineHistory.activate(context);
     logViewer.activate(context);

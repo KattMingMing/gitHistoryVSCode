@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as historyUtil from '../helpers/historyUtils';
 import * as gitPaths from '../helpers/gitPaths';
-import * as path from 'path';
+import { path } from '../helpers/path';
 import * as logger from '../logger';
 
 

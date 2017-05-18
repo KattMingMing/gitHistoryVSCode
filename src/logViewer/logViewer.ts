@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as htmlGenerator from './htmlGenerator';
 import * as gitHistory from '../helpers/gitHistory';
 import { LogEntry } from '../contracts';
-import * as path from 'path';
+import { path } from '../helpers/path';
 
 const gitHistorySchema = 'git-history-viewer';
 const PAGE_SIZE = 50;
@@ -19,7 +19,7 @@ class TextDocumentContentProvider implements vscode.TextDocumentContentProvider 
 
     public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
         try {
-            const entries = await gitHistory.getLogEntries(vscode.workspace.rootPath, pageIndex, pageSize);
+            const entries = await gitHistory.getLogEntries(vscode.workspace.rootPath!.replace('repo://', ''), pageIndex, pageSize);
             canGoPrevious = pageIndex > 0;
             canGoNext = entries.length === pageSize;
             this.entries = entries;
@@ -39,23 +39,17 @@ class TextDocumentContentProvider implements vscode.TextDocumentContentProvider 
         this._onDidChange.fire(uri);
     }
 
-    private getStyleSheetPath(resourceName: string): string {
-        return vscode.Uri.file(path.join(__dirname, '..', '..', '..', 'resources', resourceName)).toString();
-    }
     private getScriptFilePath(resourceName: string): string {
         return vscode.Uri.file(path.join(__dirname, '..', '..', 'src', 'browser', resourceName)).toString();
-    }
-    private getNodeModulesPath(resourceName: string): string {
-        return vscode.Uri.file(path.join(__dirname, '..', '..', '..', 'node_modules', resourceName)).toString();
     }
 
     private generateErrorView(error: string): string {
         return `
             <head>
-                <link rel="stylesheet" href="${this.getNodeModulesPath(path.join('normalize.css', 'normalize.css'))}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath(path.join('octicons', 'font', 'octicons.css'))}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath('animate.min.css')}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath('main.css')}" >
+                <link rel="stylesheet" href="http://rawgit.com/necolas/normalize.css/master/normalize.css" >
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/octicons/4.4.0/font/octicons.css" >
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css" >
+                <link rel="stylesheet" href="https://rawgit.com/DonJayamanne/gitHistoryVSCode/master/resources/main.css" >
             </head>
             <body>
                 ${htmlGenerator.generateErrorView(error)}
@@ -67,13 +61,13 @@ class TextDocumentContentProvider implements vscode.TextDocumentContentProvider 
         const innerHtml = htmlGenerator.generateHistoryHtmlView(this.entries, canGoPrevious, canGoNext);
         return `
             <head>
-                <link rel="stylesheet" href="${this.getNodeModulesPath(path.join('normalize.css', 'normalize.css'))}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath(path.join('octicons', 'font', 'octicons.css'))}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath('animate.min.css')}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath('hint.min.css')}" >
-                <link rel="stylesheet" href="${this.getStyleSheetPath('main.css')}" >
-                <script src="${this.getNodeModulesPath(path.join('jquery', 'dist', 'jquery.min.js'))}"></script>
-                <script src="${this.getNodeModulesPath(path.join('clipboard', 'dist', 'clipboard.min.js'))}"></script>
+                <link rel="stylesheet" href="http://rawgit.com/necolas/normalize.css/master/normalize.css" >
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/octicons/4.4.0/font/octicons.css" >
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css" >
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hint.css/2.5.0/hint.min.css" >
+                <link rel="stylesheet" href="https://rawgit.com/DonJayamanne/gitHistoryVSCode/master/resources/main.css" >
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.15/clipboard.min.js"></script>
                 <script src="${this.getScriptFilePath('proxy.js')}"></script>
                 <script src="${this.getScriptFilePath('svgGenerator.js')}"></script>
                 <script src="${this.getScriptFilePath('detailsView.js')}"></script>
