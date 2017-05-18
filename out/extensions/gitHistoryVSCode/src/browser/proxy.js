@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-require("clipboard");
 (function () {
     window.GITHISTORY = {};
     let clipboard;
